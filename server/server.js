@@ -7,6 +7,7 @@ const bodyParser = require("body-parser");
 const axios = require("axios");
 
 const connectMongo = require("../src/lib/db.js");
+const server = express();
 const { sendEmail } = require("./middlewares/helpers/mailer.js");
 
 const { registerUser, loginUser } = require("./controllers/authController.js");
@@ -50,7 +51,7 @@ const { createListing } = require("./controllers/listingController.js");
 // Load environment variables from .env file
 dotenv.config();
 
-const server = express();
+
 const router = express.Router();
 
 sendEmail();

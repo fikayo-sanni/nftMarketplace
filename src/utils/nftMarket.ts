@@ -103,7 +103,8 @@ export async function buyNFT(
   buyer: PublicKey,
   provider: anchor.AnchorProvider,
   sendTransaction: WalletAdapterProps["sendTransaction"],
-  connection: Connection
+  connection: Connection,
+  tokenKey: string | PublicKey | undefined
 ) {
   const program = await loadProgram(connection, provider);
   console.log("seller:", seller.toBase58());
@@ -113,11 +114,11 @@ export async function buyNFT(
     false,
     TOKEN_2022_PROGRAM_ID
   );
-  const SOLANA_USDC_PUBKEY = "Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr";
-  const usdcMint = new PublicKey(SOLANA_USDC_PUBKEY);
+  //const SOLANA_TOKEN_PUBKEY = "Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr";
+  const tokenMint = new PublicKey(tokenKey as PublicKey);
 
-  let buyerUSDCAccount = await getAssociatedTokenAddress(
-    usdcMint,
+  let buyerTOKENAccount = await getAssociatedTokenAddress(
+    tokenMint,
     buyer,
     false,
     TOKEN_PROGRAM_ID,
@@ -125,51 +126,51 @@ export async function buyNFT(
   );
   console.log(buyer.toBase58());
 
-  const buyerUSDCAccountInfo = await connection.getAccountInfo(
-    buyerUSDCAccount
+  const buyerTOKENAccountInfo = await connection.getAccountInfo(
+    buyerTOKENAccount
   );
-  if (buyerUSDCAccountInfo == null) {
-    console.log("creating usdc associated token account");
+  if (buyerTOKENAccountInfo == null) {
+    console.log("creating token associated token account");
     await createAssociatedAccount(
       buyer,
-      buyerUSDCAccount,
+      buyerTOKENAccount,
       buyer,
-      usdcMint,
+      tokenMint,
       provider,
       sendTransaction,
       connection
     );
-    console.log("created usdc account");
+    console.log("created token account");
   }
 
-  let sellerUSDCAccount = await getAssociatedTokenAddress(
-    usdcMint,
+  let sellerTOKENAccount = await getAssociatedTokenAddress(
+    tokenMint,
     seller,
     false,
     TOKEN_PROGRAM_ID,
     ASSOCIATED_TOKEN_PROGRAM_ID
   );
-  const sellerUSDCAccountInfo = await connection.getAccountInfo(
-    sellerUSDCAccount
+  const sellerTOKENAccountInfo = await connection.getAccountInfo(
+    sellerTOKENAccount
   );
-  if (sellerUSDCAccountInfo == null) {
-    console.log("creating usdc associated token account");
+  if (sellerTOKENAccountInfo == null) {
+    console.log("creating token associated token account");
     await createAssociatedAccount(
       buyer,
-      sellerUSDCAccount,
+      sellerTOKENAccount,
       seller,
-      usdcMint,
+      tokenMint,
       provider,
       sendTransaction,
       connection
     );
-    console.log("created usdc account");
+    console.log("created token account");
   }
 
   const buyerTokenAccount = await getOrCreateAssociatedTokenAccount(
     connection,
     buyer,
-    usdcMint,
+    tokenMint,
     buyer
   );
   console.log(buyerTokenAccount);
@@ -189,7 +190,7 @@ export async function buyNFT(
   const sellerTokenAccount = await getOrCreateAssociatedTokenAccount(
     connection,
     buyer,
-    usdcMint,
+    tokenMint,
     seller
   );
   console.log(sellerTokenAccount);
@@ -420,7 +421,7 @@ async function createAssociatedAccount(
   sendTransaction: WalletAdapterProps["sendTransaction"],
   connection: Connection
 ) {
-  const usdcTransaction = new Transaction().add(
+  const tokenTransaction = new Transaction().add(
     createAssociatedTokenAccountIdempotentInstruction(
       payer,
       associatedToken,
@@ -431,7 +432,7 @@ async function createAssociatedAccount(
     )
   );
   const latestBlockhash = await provider.connection.getLatestBlockhash();
-  const tokenSign = await sendTransaction(usdcTransaction, connection);
+  const tokenSign = await sendTransaction(tokenTransaction, connection);
   await provider.connection.confirmTransaction(
     { signature: tokenSign, ...latestBlockhash },
     "confirmed"
